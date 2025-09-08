@@ -1,0 +1,7 @@
+# Minimal dependencies for T002
+sqlalchemy>=2.0.0
+asyncpg
+alembic
+pydantic>=2.0.0
+pytest
+pytest-asyncio
