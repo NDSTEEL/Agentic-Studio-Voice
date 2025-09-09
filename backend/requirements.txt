@@ -1,7 +1,7 @@
 # Voice Agent Platform - Backend Dependencies
 # Production Dependencies
 fastapi==0.104.1
-uvicorn[standard]==0.24.0
+uvicorn[standard]==0.35.0
 pydantic==2.5.0
 pydantic[email]==2.5.0
 python-multipart==0.0.6
