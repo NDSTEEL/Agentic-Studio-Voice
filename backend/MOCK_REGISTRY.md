@@ -137,6 +137,19 @@ Track all mocked components that need real implementations before production.
   - **Real implementation:** Complete automated testing and quality checks pipeline
   - **Impact:** Production-ready CI/CD system with security scanning and automated dependency updates
 
+### T011: Voice Agent Model & API - 2 mocks documented
+**Files:** Multiple voice agent components and API endpoints
+
+- [ ] **Authentication middleware** (`src/api/dependencies/auth.py`)
+  - **Why mocked:** JWT token validation not fully implemented yet
+  - **Task to fix:** Implement real JWT signature verification and user session validation
+  - **Impact:** All API requests bypass proper authentication - security risk in production
+
+- [ ] **Database session** (`src/database/connection.py:get_db_session`)
+  - **Why mocked:** Returns None instead of real database connection for testing
+  - **Task to fix:** Connect to real PostgreSQL database with proper session management
+  - **Impact:** All voice agent CRUD operations use mocked data - no persistent storage
+
 ### T00X: [Future Tasks]
 *Mocks from future tasks will be documented here*
 

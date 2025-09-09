@@ -3,9 +3,9 @@ Database connection utilities for PostgreSQL with async support
 """
 import os
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from sqlalchemy import create_engine, text
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Generator
 
 # Base for all models
 Base = declarative_base()
@@ -86,6 +86,40 @@ async def create_tables():
         await conn.run_sync(Base.metadata.create_all)
         
     await engine.dispose()
+
+
+def create_sync_engine():
+    """Create synchronous database engine for testing and simple operations"""
+    url = get_database_url(async_mode=False)
+    engine = create_engine(
+        url,
+        pool_pre_ping=True,
+        pool_recycle=300
+    )
+    return engine
+
+
+def create_sync_session_factory():
+    """Create synchronous session factory"""
+    engine = create_sync_engine()
+    session_factory = sessionmaker(
+        engine,
+        class_=Session,
+        expire_on_commit=False
+    )
+    return session_factory
+
+
+def get_db_session() -> Generator[Session, None, None]:
+    """
+    TODO: [MOCK_REGISTRY] Mock database session - needs real database connection
+    
+    Get synchronous database session for testing and simple operations
+    This is a simplified version for testing purposes
+    """
+    # For testing, return None to simulate no database connection
+    # In real implementation, this would return actual database session
+    yield None
 
 def create_tables_sync():
     """Create all tables using sync engine for testing"""

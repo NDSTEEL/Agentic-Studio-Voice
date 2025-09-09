@@ -2,7 +2,7 @@
 Authentication endpoints for login, register, and user management
 """
 from fastapi import APIRouter, HTTPException, status, Depends
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
 import hashlib
 import os
@@ -15,11 +15,11 @@ router = APIRouter()
 
 # Pydantic models for request/response
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class RegisterRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
     name: Optional[str] = None
 

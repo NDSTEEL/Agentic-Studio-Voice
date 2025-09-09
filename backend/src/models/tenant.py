@@ -3,7 +3,7 @@ Tenant model with Row-Level Security for multi-tenant isolation
 """
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, UUID
+from sqlalchemy import Column, String, DateTime
 from sqlalchemy.orm import relationship
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from enum import Enum
@@ -32,8 +32,8 @@ class Tenant(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationships (disabled for now to avoid circular imports)
-    # voice_agents = relationship("VoiceAgent", back_populates="tenant", cascade="all, delete-orphan")
+    # Relationships
+    voice_agents = relationship("VoiceAgent", back_populates="tenant", cascade="all, delete-orphan")
     # knowledge_bases = relationship("KnowledgeBase", back_populates="tenant", cascade="all, delete-orphan")
 
     def __repr__(self):
