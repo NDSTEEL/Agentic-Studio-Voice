@@ -116,6 +116,19 @@ Track all mocked components that need real implementations before production.
   - **Task to fix:** Implement proper JWT signature verification with backend secret
   - **Impact:** Security risk - any token format accepted, no real verification
 
+### T009: Docker Development Environment - 2 mocks documented
+**Files:** Docker configuration files
+
+- [ ] **Development Dockerfiles** (`backend/Dockerfile.dev`, `frontend/Dockerfile.dev`)
+  - **Why mocked:** Development-focused containers, not production optimized
+  - **Task to fix:** Create separate production Dockerfiles with multi-stage builds and security hardening
+  - **Impact:** Development containers include debugging tools, run as non-root for dev convenience
+
+- [ ] **Environment configuration** (`.env.docker`, `backend/.env.example`)
+  - **Why mocked:** Uses development credentials and localhost configurations
+  - **Task to fix:** Implement proper secret management, environment-specific configurations
+  - **Impact:** Development secrets exposed, not suitable for production deployment
+
 ### T00X: [Future Tasks]
 *Mocks from future tasks will be documented here*
 
