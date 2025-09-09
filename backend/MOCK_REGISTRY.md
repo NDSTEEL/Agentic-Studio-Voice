@@ -83,6 +83,39 @@ Track all mocked components that need real implementations before production.
   - **Task to fix:** Remove Vite config, rely on Next.js build system
   - **Impact:** Confusing build configuration that doesn't match project structure
 
+### T008: Authentication UI - 6 mocks documented  
+**Files:** Multiple authentication files in `../frontend/src/`
+
+- [ ] **Authentication service API calls** (`src/services/authService.ts`)
+  - **Why mocked:** Backend authentication endpoints not fully implemented
+  - **Task to fix:** Connect to real backend auth API with proper JWT handling
+  - **Impact:** Login/register return mock users, bypass real authentication security
+
+- [ ] **Mock login/register responses** (`src/services/authService.ts`)
+  - **Why mocked:** No real backend user validation or database integration
+  - **Task to fix:** Implement real user validation, password hashing, database storage
+  - **Impact:** Any email/password combination accepted, no real user accounts created
+
+- [ ] **Mock current user endpoint** (`src/services/authService.ts`)
+  - **Why mocked:** No real user session management or JWT verification
+  - **Task to fix:** Implement real JWT verification and user session management
+  - **Impact:** Always returns mock user data, doesn't verify real authentication state
+
+- [ ] **Token storage security** (`src/utils/tokenStorage.ts`)
+  - **Why mocked:** Using localStorage instead of secure httpOnly cookies
+  - **Task to fix:** Implement secure token storage with httpOnly cookies and CSRF protection
+  - **Impact:** Security risk - tokens accessible to JavaScript, vulnerable to XSS
+
+- [ ] **Auth context state management** (`src/contexts/AuthContext.tsx`)
+  - **Why mocked:** Simplified authentication state without proper error handling
+  - **Task to fix:** Add comprehensive error handling, token refresh, and logout cleanup
+  - **Impact:** Basic auth state management without robust error recovery
+
+- [ ] **Next.js middleware JWT verification** (`middleware.ts`)
+  - **Why mocked:** Mock token validation instead of real JWT signature verification
+  - **Task to fix:** Implement proper JWT signature verification with backend secret
+  - **Impact:** Security risk - any token format accepted, no real verification
+
 ### T00X: [Future Tasks]
 *Mocks from future tasks will be documented here*
 
