@@ -236,3 +236,54 @@ class VoiceAgentService:
             Optional[Dict[str, Any]]: Deactivated agent if successful
         """
         return self.update_agent(agent_id, tenant_id, {'status': 'inactive'})
+    
+    def create_agent_with_knowledge(self, tenant_id: str, agent_data: Dict[str, Any], knowledge_base: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Create a new voice agent with pre-populated knowledge base
+        
+        Args:
+            tenant_id: UUID of the tenant
+            agent_data: Dictionary containing agent creation data
+            knowledge_base: Pre-populated knowledge base from crawling
+            
+        Returns:
+            Dict[str, Any]: Created voice agent with knowledge
+        """
+        # Merge the knowledge base into agent data
+        agent_data_with_kb = agent_data.copy()
+        agent_data_with_kb['knowledge_base'] = knowledge_base
+        
+        return self.create_agent(tenant_id, agent_data_with_kb)
+    
+    def update_agent_knowledge_from_crawl(self, agent_id: str, tenant_id: str, crawled_knowledge: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Update voice agent knowledge base with new crawled data
+        
+        Args:
+            agent_id: UUID of the voice agent
+            tenant_id: UUID of the tenant (for security check)
+            crawled_knowledge: New knowledge data from web crawling
+            
+        Returns:
+            Optional[Dict[str, Any]]: Updated agent with new knowledge
+        """
+        return self.update_agent(agent_id, tenant_id, {'knowledge_base': crawled_knowledge})
+    
+    def get_agent_with_knowledge(self, agent_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get agent with full knowledge base expansion
+        
+        Args:
+            agent_id: UUID of the voice agent
+            tenant_id: UUID of the tenant (for security check)
+            
+        Returns:
+            Optional[Dict[str, Any]]: Agent with expanded knowledge base
+        """
+        agent = self.get_agent_by_id(agent_id, tenant_id)
+        if not agent:
+            return None
+            
+        # For now, just return the agent as-is
+        # In future, this could expand knowledge base with additional processing
+        return agent
