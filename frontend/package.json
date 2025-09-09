@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "preview": "next start",
     "lint": "next lint",
+    "type-check": "tsc --noEmit",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
   },
@@ -14,6 +16,7 @@
     "next": "14.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "axios": "^1.6.0",
     "socket.io-client": "^4.7.4",
     "zustand": "^4.4.7",
     "@radix-ui/react-dialog": "^1.0.5",
