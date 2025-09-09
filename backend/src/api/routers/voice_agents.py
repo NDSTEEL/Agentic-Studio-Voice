@@ -5,9 +5,6 @@ FastAPI endpoints for voice agent management with tenant isolation
 from typing import List, Dict, Any
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
-
-from src.database.connection import get_db_session
 from src.services.voice_agent_service import VoiceAgentService
 from src.schemas.voice_agent_schemas import (
     VoiceAgentCreateRequest,
@@ -26,8 +23,7 @@ router = APIRouter(prefix="/agents", tags=["Voice Agents"])
 @router.post("/", response_model=VoiceAgentResponse, status_code=status.HTTP_201_CREATED)
 async def create_voice_agent(
     agent_request: VoiceAgentCreateRequest,
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Session = Depends(get_db_session)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """
     Create a new voice agent for the authenticated tenant
@@ -40,7 +36,7 @@ async def create_voice_agent(
     Returns the created voice agent with generated ID and metadata.
     """
     try:
-        service = VoiceAgentService(db)
+        service = VoiceAgentService()
         
         # Extract tenant ID from authenticated user
         tenant_id = current_user['tenant_id']
@@ -51,8 +47,8 @@ async def create_voice_agent(
             agent_data=agent_request.dict()
         )
         
-        # Convert to response model
-        return VoiceAgentResponse(**voice_agent.to_dict())
+        # Convert to response model  
+        return VoiceAgentResponse(**voice_agent)
         
     except ValueError as e:
         raise HTTPException(
@@ -71,7 +67,6 @@ async def list_voice_agents(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(10, ge=1, le=100, description="Items per page"),
     current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Session = Depends(get_db_session)
 ):
     """
     List all voice agents for the authenticated tenant
@@ -82,7 +77,7 @@ async def list_voice_agents(
     Returns paginated list of voice agents owned by the tenant.
     """
     try:
-        service = VoiceAgentService(db)
+        service = VoiceAgentService()
         
         # Extract tenant ID from authenticated user
         tenant_id = current_user['tenant_id']
@@ -98,7 +93,7 @@ async def list_voice_agents(
         
         # Convert to response models
         agent_responses = [
-            VoiceAgentResponse(**agent.to_dict())
+            VoiceAgentResponse(**agent)
             for agent in paginated_agents
         ]
         
@@ -120,7 +115,6 @@ async def list_voice_agents(
 async def get_voice_agent(
     agent_id: str,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Session = Depends(get_db_session)
 ):
     """
     Get a specific voice agent by ID
@@ -130,7 +124,7 @@ async def get_voice_agent(
     Returns the voice agent if it exists and is owned by the authenticated tenant.
     """
     try:
-        service = VoiceAgentService(db)
+        service = VoiceAgentService()
         
         # Extract tenant ID from authenticated user
         tenant_id = current_user['tenant_id']
@@ -144,7 +138,7 @@ async def get_voice_agent(
                 detail="Voice agent not found"
             )
         
-        return VoiceAgentResponse(**voice_agent.to_dict())
+        return VoiceAgentResponse(**voice_agent)
         
     except HTTPException:
         raise
@@ -160,7 +154,6 @@ async def update_voice_agent(
     agent_id: str,
     agent_update: VoiceAgentUpdateRequest,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Session = Depends(get_db_session)
 ):
     """
     Update a voice agent
@@ -175,7 +168,7 @@ async def update_voice_agent(
     Returns the updated voice agent.
     """
     try:
-        service = VoiceAgentService(db)
+        service = VoiceAgentService()
         
         # Extract tenant ID from authenticated user
         tenant_id = current_user['tenant_id']
@@ -193,7 +186,7 @@ async def update_voice_agent(
                 detail="Voice agent not found"
             )
         
-        return VoiceAgentResponse(**voice_agent.to_dict())
+        return VoiceAgentResponse(**voice_agent)
         
     except HTTPException:
         raise
@@ -214,7 +207,6 @@ async def update_voice_agent_knowledge(
     agent_id: str,
     knowledge_update: VoiceAgentKnowledgeUpdateRequest,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Session = Depends(get_db_session)
 ):
     """
     Update a voice agent's knowledge base
@@ -225,7 +217,7 @@ async def update_voice_agent_knowledge(
     Returns the updated voice agent with new knowledge base.
     """
     try:
-        service = VoiceAgentService(db)
+        service = VoiceAgentService()
         
         # Extract tenant ID from authenticated user
         tenant_id = current_user['tenant_id']
@@ -243,7 +235,7 @@ async def update_voice_agent_knowledge(
                 detail="Voice agent not found"
             )
         
-        return VoiceAgentResponse(**voice_agent.to_dict())
+        return VoiceAgentResponse(**voice_agent)
         
     except HTTPException:
         raise
@@ -263,7 +255,6 @@ async def update_voice_agent_knowledge(
 async def activate_voice_agent(
     agent_id: str,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Session = Depends(get_db_session)
 ):
     """
     Activate a voice agent to start receiving calls
@@ -273,7 +264,7 @@ async def activate_voice_agent(
     Returns the activated voice agent.
     """
     try:
-        service = VoiceAgentService(db)
+        service = VoiceAgentService()
         
         # Extract tenant ID from authenticated user
         tenant_id = current_user['tenant_id']
@@ -287,7 +278,7 @@ async def activate_voice_agent(
                 detail="Voice agent not found"
             )
         
-        return VoiceAgentResponse(**voice_agent.to_dict())
+        return VoiceAgentResponse(**voice_agent)
         
     except HTTPException:
         raise
@@ -302,7 +293,6 @@ async def activate_voice_agent(
 async def deactivate_voice_agent(
     agent_id: str,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Session = Depends(get_db_session)
 ):
     """
     Deactivate a voice agent to stop receiving calls
@@ -312,7 +302,7 @@ async def deactivate_voice_agent(
     Returns the deactivated voice agent.
     """
     try:
-        service = VoiceAgentService(db)
+        service = VoiceAgentService()
         
         # Extract tenant ID from authenticated user
         tenant_id = current_user['tenant_id']
@@ -326,7 +316,7 @@ async def deactivate_voice_agent(
                 detail="Voice agent not found"
             )
         
-        return VoiceAgentResponse(**voice_agent.to_dict())
+        return VoiceAgentResponse(**voice_agent)
         
     except HTTPException:
         raise
@@ -341,7 +331,6 @@ async def deactivate_voice_agent(
 async def delete_voice_agent(
     agent_id: str,
     current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Session = Depends(get_db_session)
 ):
     """
     Delete (soft delete) a voice agent
@@ -351,7 +340,7 @@ async def delete_voice_agent(
     Marks the agent as inactive and removes it from listings.
     """
     try:
-        service = VoiceAgentService(db)
+        service = VoiceAgentService()
         
         # Extract tenant ID from authenticated user
         tenant_id = current_user['tenant_id']

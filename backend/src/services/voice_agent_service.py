@@ -3,11 +3,11 @@ Voice Agent Service
 Business logic for voice agent management with tenant isolation
 """
 from typing import List, Optional, Dict, Any
-from uuid import UUID
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
+from uuid import UUID, uuid4
+from datetime import datetime
+from google.cloud.firestore import Client
 
-from src.models.voice_agent import VoiceAgent
+from src.services.firebase_config import get_firestore_client
 from src.schemas.knowledge_categories import (
     validate_knowledge_category, 
     get_empty_knowledge_base,
@@ -20,10 +20,11 @@ class VoiceAgentService:
     Service class for voice agent CRUD operations with tenant isolation
     """
     
-    def __init__(self, db_session: Optional[Session] = None):
-        self.db = db_session
+    def __init__(self, firestore_client: Optional[Client] = None):
+        self.db = firestore_client or get_firestore_client()
+        self.collection = 'voice_agents'
     
-    def create_agent(self, tenant_id: str, agent_data: Dict[str, Any]) -> VoiceAgent:
+    def create_agent(self, tenant_id: str, agent_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create a new voice agent for a specific tenant
         
@@ -32,11 +33,10 @@ class VoiceAgentService:
             agent_data: Dictionary containing agent creation data
             
         Returns:
-            VoiceAgent: Created voice agent instance
+            Dict[str, Any]: Created voice agent data
             
         Raises:
             ValueError: If validation fails
-            SQLAlchemyError: If database operation fails
         """
         try:
             # Validate and prepare knowledge base
@@ -52,31 +52,31 @@ class VoiceAgentService:
                 else:
                     validated_kb[category] = None
             
-            # Create voice agent instance
-            voice_agent = VoiceAgent(
-                tenant_id=tenant_id,
-                name=agent_data['name'],
-                description=agent_data.get('description', ''),
-                knowledge_base=validated_kb,
-                voice_config=agent_data.get('voice_config', {}),
-                status='inactive',  # New agents start inactive
-                is_active=True
-            )
+            # Create voice agent data
+            agent_id = str(uuid4())
+            voice_agent_data = {
+                'id': agent_id,
+                'tenant_id': tenant_id,
+                'name': agent_data['name'],
+                'description': agent_data.get('description', ''),
+                'knowledge_base': validated_kb,
+                'voice_config': agent_data.get('voice_config', {}),
+                'status': 'inactive',  # New agents start inactive
+                'is_active': True,
+                'created_at': datetime.utcnow(),
+                'updated_at': datetime.utcnow()
+            }
             
-            # Save to database (mocked for now)
-            if self.db:
-                self.db.add(voice_agent)
-                self.db.commit()
-                self.db.refresh(voice_agent)
+            # Save to Firestore
+            doc_ref = self.db.collection(self.collection).document(agent_id)
+            doc_ref.set(voice_agent_data)
             
-            return voice_agent
+            return voice_agent_data
             
         except Exception as e:
-            if self.db:
-                self.db.rollback()
             raise ValueError(f"Failed to create voice agent: {str(e)}")
     
-    def get_agents_for_tenant(self, tenant_id: str) -> List[VoiceAgent]:
+    def get_agents_for_tenant(self, tenant_id: str) -> List[Dict[str, Any]]:
         """
         Get all voice agents for a specific tenant
         
@@ -84,25 +84,28 @@ class VoiceAgentService:
             tenant_id: UUID of the tenant
             
         Returns:
-            List[VoiceAgent]: List of voice agents owned by the tenant
+            List[Dict[str, Any]]: List of voice agents owned by the tenant
         """
         try:
-            if self.db:
-                return (
-                    self.db.query(VoiceAgent)
-                    .filter(VoiceAgent.tenant_id == tenant_id)
-                    .filter(VoiceAgent.is_active == True)
-                    .order_by(VoiceAgent.created_at.desc())
-                    .all()
-                )
-            else:
-                # Mock data for testing
-                return []
+            # Query Firestore for tenant's voice agents
+            query = (self.db.collection(self.collection)
+                    .where('tenant_id', '==', tenant_id)
+                    .where('is_active', '==', True)
+                    .order_by('created_at', direction='DESCENDING'))
+            
+            docs = query.stream()
+            agents = []
+            for doc in docs:
+                agent_data = doc.to_dict()
+                agent_data['id'] = doc.id
+                agents.append(agent_data)
+            
+            return agents
                 
-        except SQLAlchemyError as e:
+        except Exception as e:
             raise ValueError(f"Failed to retrieve voice agents: {str(e)}")
     
-    def get_agent_by_id(self, agent_id: str, tenant_id: str) -> Optional[VoiceAgent]:
+    def get_agent_by_id(self, agent_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         """
         Get a specific voice agent by ID with tenant isolation
         
@@ -111,25 +114,28 @@ class VoiceAgentService:
             tenant_id: UUID of the tenant (for security check)
             
         Returns:
-            Optional[VoiceAgent]: Voice agent if found and owned by tenant, None otherwise
+            Optional[Dict[str, Any]]: Voice agent if found and owned by tenant, None otherwise
         """
         try:
-            if self.db:
-                return (
-                    self.db.query(VoiceAgent)
-                    .filter(VoiceAgent.id == agent_id)
-                    .filter(VoiceAgent.tenant_id == tenant_id)  # Tenant isolation
-                    .filter(VoiceAgent.is_active == True)
-                    .first()
-                )
-            else:
-                # Mock data for testing
-                return None
+            # Get document from Firestore with tenant isolation
+            doc_ref = self.db.collection(self.collection).document(agent_id)
+            doc = doc_ref.get()
+            
+            if doc.exists:
+                agent_data = doc.to_dict()
+                agent_data['id'] = doc.id
                 
-        except SQLAlchemyError as e:
+                # Verify tenant ownership and active status
+                if (agent_data.get('tenant_id') == tenant_id and 
+                    agent_data.get('is_active', False)):
+                    return agent_data
+            
+            return None
+                
+        except Exception as e:
             raise ValueError(f"Failed to retrieve voice agent: {str(e)}")
     
-    def update_agent(self, agent_id: str, tenant_id: str, update_data: Dict[str, Any]) -> Optional[VoiceAgent]:
+    def update_agent(self, agent_id: str, tenant_id: str, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Update a voice agent with tenant isolation
         
@@ -139,39 +145,42 @@ class VoiceAgentService:
             update_data: Dictionary containing update data
             
         Returns:
-            Optional[VoiceAgent]: Updated voice agent if found and owned by tenant
+            Optional[Dict[str, Any]]: Updated voice agent if found and owned by tenant
         """
         try:
             agent = self.get_agent_by_id(agent_id, tenant_id)
             if not agent:
                 return None
             
+            # Prepare update data
+            updates = {'updated_at': datetime.utcnow()}
+            
             # Update allowed fields
             if 'name' in update_data:
-                agent.name = update_data['name']
+                updates['name'] = update_data['name']
             if 'description' in update_data:
-                agent.description = update_data['description']
+                updates['description'] = update_data['description']
             if 'voice_config' in update_data:
-                agent.voice_config = update_data['voice_config']
+                updates['voice_config'] = update_data['voice_config']
             if 'knowledge_base' in update_data:
                 # Merge knowledge base updates
-                agent.knowledge_base = merge_knowledge_categories(
-                    agent.knowledge_base, 
+                updates['knowledge_base'] = merge_knowledge_categories(
+                    agent.get('knowledge_base', {}), 
                     update_data['knowledge_base']
                 )
             if 'status' in update_data:
-                agent.status = update_data['status']
+                updates['status'] = update_data['status']
             
-            # Save changes
-            if self.db:
-                self.db.commit()
-                self.db.refresh(agent)
+            # Update document in Firestore
+            doc_ref = self.db.collection(self.collection).document(agent_id)
+            doc_ref.update(updates)
             
-            return agent
+            # Return updated agent
+            updated_agent = agent.copy()
+            updated_agent.update(updates)
+            return updated_agent
             
         except Exception as e:
-            if self.db:
-                self.db.rollback()
             raise ValueError(f"Failed to update voice agent: {str(e)}")
     
     def delete_agent(self, agent_id: str, tenant_id: str) -> bool:
@@ -191,19 +200,18 @@ class VoiceAgentService:
                 return False
             
             # Soft delete by setting is_active to False
-            agent.is_active = False
-            
-            if self.db:
-                self.db.commit()
+            doc_ref = self.db.collection(self.collection).document(agent_id)
+            doc_ref.update({
+                'is_active': False,
+                'updated_at': datetime.utcnow()
+            })
             
             return True
             
         except Exception as e:
-            if self.db:
-                self.db.rollback()
             raise ValueError(f"Failed to delete voice agent: {str(e)}")
     
-    def activate_agent(self, agent_id: str, tenant_id: str) -> Optional[VoiceAgent]:
+    def activate_agent(self, agent_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         """
         Activate a voice agent for receiving calls
         
@@ -212,11 +220,11 @@ class VoiceAgentService:
             tenant_id: UUID of the tenant (for security check)
             
         Returns:
-            Optional[VoiceAgent]: Activated agent if successful
+            Optional[Dict[str, Any]]: Activated agent if successful
         """
         return self.update_agent(agent_id, tenant_id, {'status': 'active'})
     
-    def deactivate_agent(self, agent_id: str, tenant_id: str) -> Optional[VoiceAgent]:
+    def deactivate_agent(self, agent_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         """
         Deactivate a voice agent from receiving calls
         
@@ -225,6 +233,6 @@ class VoiceAgentService:
             tenant_id: UUID of the tenant (for security check)
             
         Returns:
-            Optional[VoiceAgent]: Deactivated agent if successful
+            Optional[Dict[str, Any]]: Deactivated agent if successful
         """
         return self.update_agent(agent_id, tenant_id, {'status': 'inactive'})
