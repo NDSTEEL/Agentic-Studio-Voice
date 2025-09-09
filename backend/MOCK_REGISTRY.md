@@ -3,6 +3,9 @@
 ## Purpose
 Track all mocked components that need real implementations before production.
 
+**Total Mocks:** 26 items across 11 tasks
+**Latest Update:** T012 - Added knowledge base services (3 new mocks)
+
 ## Mocks to Replace
 
 ### T006: Tenant Management API - 6 mocks documented
@@ -82,6 +85,23 @@ Track all mocked components that need real implementations before production.
   - **Why mocked:** Project uses Next.js, not Vite
   - **Task to fix:** Remove Vite config, rely on Next.js build system
   - **Impact:** Confusing build configuration that doesn't match project structure
+
+## T012: Knowledge Categories Schema - New Mocks (3 items)
+
+- [ ] **Web Crawler Service** (`src/services/web_crawler_service.py`)
+  - **Why mocked:** Real web scraping requires HTTP clients, HTML parsers, rate limiting
+  - **Task to fix:** Implement with aiohttp, BeautifulSoup, sitemap.xml parsing
+  - **Impact:** Cannot actually crawl business websites for knowledge extraction
+
+- [ ] **Content Extraction Service** (`src/services/content_extraction_service.py`)
+  - **Why mocked:** AI-powered content extraction requires LLM integration (OpenAI/Claude)
+  - **Task to fix:** Integrate with OpenAI API or local LLM for real NLP processing
+  - **Impact:** Knowledge categorization uses simple keyword matching instead of AI
+
+- [ ] **Knowledge Base Management** (`src/services/knowledge_base_service.py`)
+  - **Why mocked:** Database operations, compression, and incremental updates need real persistence
+  - **Task to fix:** Connect to PostgreSQL, implement real compression algorithms
+  - **Impact:** Knowledge base operations are in-memory only, no actual storage
 
 ### T008: Authentication UI - 6 mocks documented  
 **Files:** Multiple authentication files in `../frontend/src/`

@@ -85,6 +85,46 @@ def validate_knowledge_category(category_name: str, data: Dict[str, Any]) -> Kno
     return KnowledgeCategoryData(**data)
 
 
+def validate_category_data(category_name: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Validate and return category data as dictionary
+    Enhanced validation with structured data support
+    """
+    if category_name not in KNOWLEDGE_CATEGORIES:
+        raise ValueError(f"Invalid category: {category_name}. Must be one of {KNOWLEDGE_CATEGORIES}")
+    
+    # Validate required fields
+    if 'title' not in data or not data['title']:
+        raise ValueError("Title is required for knowledge category")
+    
+    if 'content' not in data or not data['content']:
+        raise ValueError("Content is required for knowledge category")
+    
+    # Validate field types
+    if 'confidence_score' in data:
+        if not isinstance(data['confidence_score'], (int, float)):
+            raise ValueError("confidence_score must be a number")
+        if not (0.0 <= data['confidence_score'] <= 1.0):
+            raise ValueError("confidence_score must be between 0.0 and 1.0")
+    
+    if 'keywords' in data:
+        if not isinstance(data['keywords'], list):
+            raise ValueError("keywords must be a list")
+    
+    # Create validated category data
+    validated_data = {
+        'title': str(data['title']),
+        'content': str(data['content']),
+        'keywords': data.get('keywords', []),
+        'confidence_score': data.get('confidence_score', 1.0),
+        'source_url': data.get('source_url'),
+        'last_updated': data.get('last_updated', datetime.now().isoformat()),
+        'structured_data': data.get('structured_data', {})
+    }
+    
+    return validated_data
+
+
 def get_extraction_rules(category_name: str) -> Dict[str, Any]:
     """
     Get web crawling extraction rules for each knowledge category
