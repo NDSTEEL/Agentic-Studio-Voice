@@ -68,7 +68,7 @@ jobs:
         python -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term --cov-fail-under=80
     
     - name: Upload backend coverage reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: backend-coverage-report
         path: backend/htmlcov/
@@ -146,7 +146,7 @@ jobs:
         npm audit --audit-level=moderate
     
     - name: Upload security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: security-reports
