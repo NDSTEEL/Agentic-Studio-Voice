@@ -419,14 +419,14 @@ class TestAPIEndpointIntegration:
     def test_knowledge_update_api_integration(self):
         """Test API integration for knowledge updates"""
         try:
-            from src.api.routers.voice_agents import update_agent_knowledge
-            from src.schemas.voice_agent_schemas import KnowledgeUpdateRequest
+            from src.api.routers.voice_agents import update_voice_agent_knowledge
+            from src.schemas.voice_agent_schemas import VoiceAgentKnowledgeUpdateRequest
             
             # Endpoint function should exist
-            assert callable(update_agent_knowledge)
+            assert callable(update_voice_agent_knowledge)
             
             # Schema should be importable
-            assert KnowledgeUpdateRequest is not None
+            assert VoiceAgentKnowledgeUpdateRequest is not None
             
             # Should handle knowledge category updates
             test_knowledge_update = {
@@ -439,8 +439,8 @@ class TestAPIEndpointIntegration:
             
             # Schema should validate the request
             try:
-                request = KnowledgeUpdateRequest(knowledge_updates=test_knowledge_update)
-                assert request.knowledge_updates is not None
+                request = VoiceAgentKnowledgeUpdateRequest(knowledge_base=test_knowledge_update)
+                assert request.knowledge_base is not None
             except Exception as e:
                 # If schema validation fails, that's still a valid test result
                 assert 'validation' in str(e).lower() or 'required' in str(e).lower()

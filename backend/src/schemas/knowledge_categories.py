@@ -38,6 +38,7 @@ class KnowledgeCategoryData(BaseModel):
     last_updated: str = Field(default_factory=lambda: datetime.now().isoformat())
     source_url: Optional[str] = None
     confidence_score: float = Field(default=1.0, ge=0.0, le=1.0)
+    structured_data: Dict[str, Any] = Field(default_factory=dict)
     
     @validator('keywords')
     def validate_keywords(cls, v):

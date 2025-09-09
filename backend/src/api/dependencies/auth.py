@@ -6,7 +6,19 @@ from typing import Dict, Any, Optional
 from fastapi import HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from src.services.firebase_config import verify_firebase_token, get_firestore_client
-from google.cloud.firestore import DocumentSnapshot
+
+# Try to import Google Cloud, fallback to mock for testing
+try:
+    from google.cloud.firestore import DocumentSnapshot
+    HAS_GOOGLE_CLOUD = True
+except ImportError:
+    # Mock DocumentSnapshot for testing
+    class DocumentSnapshot:
+        def __init__(self, data):
+            self._data = data
+        def to_dict(self):
+            return self._data
+    HAS_GOOGLE_CLOUD = False
 
 logger = logging.getLogger(__name__)
 security = HTTPBearer()
