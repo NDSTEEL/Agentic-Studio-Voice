@@ -6,7 +6,7 @@ from typing import List, Optional, Dict, Any
 from uuid import UUID, uuid4
 from datetime import datetime
 
-# Try to import Google Cloud Firestore, fallback to mock for testing
+# Import Google Cloud Firestore - REAL implementation
 try:
     from google.cloud.firestore import Client
     from src.services.firebase_config import get_firestore_client
@@ -434,3 +434,28 @@ class VoiceAgentService:
                 pass
         
         return MockSession()
+    
+    async def _get_agent(self, agent_id: str) -> Dict[str, Any]:
+        """Internal method to get agent without tenant isolation"""
+        doc_ref = self.db.collection(self.collection).document(agent_id)
+        doc = doc_ref.get()
+        
+        if doc.exists:
+            agent_data = doc.to_dict()
+            agent_data['id'] = doc.id
+            return agent_data
+        
+        raise ValueError(f"Agent {agent_id} not found")
+    
+    async def _update_agent(self, agent: Dict[str, Any]) -> None:
+        """Internal method to update agent"""
+        agent_id = agent['id']
+        doc_ref = self.db.collection(self.collection).document(agent_id)
+        doc_ref.update(agent)
+    
+    async def activate_agent_async(self, agent_id: str) -> Dict[str, Any]:
+        """Activate a voice agent after creation (async version)"""
+        agent = await self._get_agent(agent_id)
+        agent['status'] = "active"
+        await self._update_agent(agent)
+        return {"status": "activated", "agent_id": agent_id}

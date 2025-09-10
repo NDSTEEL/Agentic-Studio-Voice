@@ -1,0 +1,37 @@
+{
+  "call_id": "call-b1a267bc-35a9-4bfe-bdf0-d042d7a5e863",
+  "agent_id": "agent-integration-123",
+  "tenant_id": "tenant-789",
+  "caller_number": "+15551234567",
+  "start_time": "2025-09-09T22:06:11.674572",
+  "status": "completed",
+  "duration": 0.001156,
+  "end_time": "2025-09-09T22:06:11.675728",
+  "end_reason": "completed",
+  "customer_satisfaction": 8,
+  "events": [
+    {
+      "type": "user_message",
+      "content": "Hello",
+      "timestamp": "2025-09-09T22:06:11.674897"
+    },
+    {
+      "type": "agent_response",
+      "content": "Hi! How can I help?",
+      "timestamp": "2025-09-09T22:06:11.674917"
+    },
+    {
+      "type": "intent_recognized",
+      "intent": "greeting",
+      "confidence": 0.95,
+      "timestamp": "2025-09-09T22:06:11.674925"
+    }
+  ],
+  "recording_file": null,
+  "recording_size": 0,
+  "transcription": null,
+  "metadata": {
+    "recording_enabled": true,
+    "transcription_enabled": false
+  }
+}

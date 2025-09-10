@@ -38,24 +38,34 @@ class FirebaseConfig:
         except ValueError:
             # Initialize new app
             try:
-                # Production: use service account key or default credentials
-                if os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY'):
-                    # JSON key as environment variable
+                # Priority order for Firebase credentials
+                
+                # 1. Direct service account file path (RECOMMENDED for 100% real implementation)
+                service_account_path = os.path.join(os.path.dirname(__file__), '..', '..', 'firebase-service-account.json')
+                if os.path.exists(service_account_path):
+                    cred = credentials.Certificate(service_account_path)
+                    initialize_app(cred)
+                    logger.info(f"✅ Firebase initialized with direct service account file: {service_account_path}")
+                
+                # 2. Environment variable with JSON key content
+                elif os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY'):
                     import json
                     service_account_info = json.loads(os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY'))
                     cred = credentials.Certificate(service_account_info)
                     initialize_app(cred)
-                    logger.info("Firebase initialized with service account key")
+                    logger.info("✅ Firebase initialized with service account key from environment")
+                
+                # 3. Environment variable with file path
                 elif os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
-                    # Service account key file path
                     cred = credentials.Certificate(os.getenv('GOOGLE_APPLICATION_CREDENTIALS'))
                     initialize_app(cred)
-                    logger.info("Firebase initialized with service account file")
+                    logger.info(f"✅ Firebase initialized with service account file: {os.getenv('GOOGLE_APPLICATION_CREDENTIALS')}")
+                
+                # 4. Default credentials (for Cloud environments)
                 else:
-                    # Default credentials (for Cloud Run, GAE, etc.)
                     cred = credentials.ApplicationDefault()
                     initialize_app(cred)
-                    logger.info("Firebase initialized with default credentials")
+                    logger.info("✅ Firebase initialized with default credentials")
                     
             except Exception as e:
                 logger.error(f"Failed to initialize Firebase: {e}")

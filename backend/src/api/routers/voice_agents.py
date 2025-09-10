@@ -15,9 +15,89 @@ from src.schemas.voice_agent_schemas import (
     VoiceAgentKnowledgeUpdateRequest
 )
 from src.api.dependencies.auth import get_current_user
+from src.websocket.progress_tracker import ProgressTracker
+from src.api.websocket_routes import get_progress_manager, get_websocket_manager
 
 
 router = APIRouter(prefix="/agents", tags=["Voice Agents"])
+
+
+@router.post("/create-with-progress", status_code=status.HTTP_202_ACCEPTED)
+async def create_voice_agent_with_progress(
+    agent_request: VoiceAgentCreateRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """
+    Create a new voice agent and return a session ID for progress tracking
+    
+    This endpoint starts the agent creation process and immediately returns
+    a session ID that clients can use to track progress via WebSocket.
+    
+    Returns:
+    - session_id: Use this to connect to WebSocket for real-time updates
+    - message: Status message
+    """
+    # Initialize progress tracking
+    progress_manager = get_progress_manager()
+    websocket_manager = get_websocket_manager()
+    progress_tracker = ProgressTracker(progress_manager, websocket_manager)
+    
+    # Start the session immediately
+    session_id = progress_manager.create_session("agent_creation")
+    
+    # Start the creation process asynchronously
+    import asyncio
+    
+    async def create_agent_async():
+        try:
+            async with progress_tracker.track_operation(
+                "agent_creation", 
+                f"Creating voice agent: {agent_request.name}"
+            ) as session:
+                # Override the session to use our pre-created one
+                session.session_id = session_id
+                
+                await session.update("Initializing voice agent creation", 10)
+                
+                service = VoiceAgentService()
+                tenant_id = current_user['tenant_id']
+                
+                await session.update("Validating request data", 20)
+                await session.update("Setting up agent configuration", 40)
+                await session.update("Initializing knowledge base", 60)
+                await session.update("Creating voice agent in database", 80)
+                
+                voice_agent = service.create_agent(
+                    tenant_id=tenant_id,
+                    agent_data=agent_request.dict()
+                )
+                
+                await session.update("Finalizing agent setup", 95)
+                
+                response = VoiceAgentResponse(**voice_agent)
+                
+                await session.complete(
+                    success=True,
+                    result=f"Voice agent '{agent_request.name}' created successfully with ID: {response.agent_id}"
+                )
+                
+        except Exception as e:
+            progress_manager.complete_session(
+                session_id, 
+                success=False, 
+                result=f"Failed to create voice agent: {str(e)}"
+            )
+            await websocket_manager.broadcast_session_complete(session_id)
+    
+    # Start the background task
+    asyncio.create_task(create_agent_async())
+    
+    # Return session ID immediately for progress tracking
+    return {
+        "session_id": session_id,
+        "message": "Agent creation started. Use session_id to track progress via WebSocket.",
+        "websocket_url": "/api/v1/ws/progress"
+    }
 
 
 @router.post("/", response_model=VoiceAgentResponse, status_code=status.HTTP_201_CREATED)

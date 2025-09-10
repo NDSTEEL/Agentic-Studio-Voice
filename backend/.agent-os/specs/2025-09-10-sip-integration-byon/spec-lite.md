@@ -1,0 +1,3 @@
+# Spec Summary (Lite)
+
+Implement SIP trunking integration that allows customers to use their existing business phone numbers with the Voice Agent Platform, eliminating the need to change established numbers and providing major competitive advantage. Customers can route calls from their existing numbers through SIP trunks to voice agents, supporting hybrid environments with both SIP-connected and Twilio-native numbers through a comprehensive BYON (Bring Your Own Number) onboarding wizard and management system.

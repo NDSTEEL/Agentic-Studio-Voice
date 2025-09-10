@@ -1,0 +1,17 @@
+{
+  "call_id": "call-dashboard-2",
+  "agent_id": "agent-integration-123",
+  "tenant_id": "tenant-789",
+  "caller_number": "+1555123452",
+  "start_time": "2025-09-09T22:51:58.051547",
+  "status": "completed",
+  "duration": 6.1e-05,
+  "end_time": "2025-09-09T22:51:58.051608",
+  "end_reason": "completed",
+  "customer_satisfaction": 10,
+  "events": [],
+  "recording_file": null,
+  "recording_size": 0,
+  "transcription": null,
+  "metadata": {}
+}
